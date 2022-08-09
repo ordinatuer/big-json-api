@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  php-fpm:
+    container_name: kt_php-fpm
+    build:
+      context: ./../
+      dockerfile: ./docker/php-fpm/Dockerfile
+      args:
+        - PUID=${PUID}
+        - PGID=${PGID}
+        - INSTALL_XDEBUG=${INSTALL_XDEBUG}
+    environment:
+      PHP_IDE_CONFIG: "serverName=Docker"
+    volumes:
+      - /var/www/vendor
+      - ./../:/var/www
+    networks:
+      kt_net:
+        ipv4_address: 11.21.0.2
+
+  nginx:
+    container_name: kt_nginx
+    build:
+      context: ./nginx
+    ports:
+      - ${NGINX_HOST_HTTP_PORT}:80
+    volumes:
+      - ..:/var/www:rw
+    depends_on:
+      - php-fpm
+    networks:
+      kt_net:
+        ipv4_address: 11.21.0.3
+
+  mysql:
+    container_name: kt_mysql
+    build:
+      context: ./mysql
+    ports:
+      - ${MYSQL_PORT}:3306
+    volumes:
+      - kt_mysql-storage:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      kt_net:
+        ipv4_address: 11.21.0.4
+
+networks:
+  kt_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 11.21.0.0/16
+          gateway: 11.21.0.1
+
+volumes:
+  kt_mysql-storage:
