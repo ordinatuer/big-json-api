@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Price;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Service\Price\JSONPrices;
 
 /**
  * @extends ServiceEntityRepository<Price>
@@ -37,6 +38,32 @@ class PriceRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function addList(array $data): int
+    {
+        $manager = $this->getEntityManager();
+        $result = 0;
+
+        foreach($data as $product) {
+            foreach($product->prices as $region_id => $prices) {
+                $price = new Price();
+
+                $price->setRegionId($region_id);
+                $price->setProductId($product->product_id);
+                $price->setPrices($prices);
+
+                // INSERT INTO table ... ON DUPLICATE KEY UPDATE ...
+                if ($manager->merge($price)) {
+                    $result++;
+                }
+
+                $manager->flush();
+                $manager->clear();
+            }
+        }
+
+        return $result;
     }
 
 //    /**

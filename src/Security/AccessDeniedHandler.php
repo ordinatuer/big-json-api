@@ -16,7 +16,6 @@ class AccessDeniedHandler implements AccessDeniedHandlerInterface
     {
         return new JsonResponse([
             'error' => [
-                'denied' => 'denied',
                 'code' => $accessDeniedException->getCode(),
                 'message' => $accessDeniedException->getMessage(),
             ],

@@ -4,18 +4,16 @@ namespace App\Entity;
 
 use App\Repository\PriceRepository;
 use Doctrine\ORM\Mapping as ORM;
+use stdClass;
 
 #[ORM\Entity(repositoryClass: PriceRepository::class)]
 class Price
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\Column]
     private ?int $product_id = null;
 
+    #[ORM\Id]
     #[ORM\Column]
     private ?int $region_id = null;
 
@@ -27,11 +25,6 @@ class Price
 
     #[ORM\Column]
     private ?float $price_discount = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getProductId(): ?int
     {
@@ -89,6 +82,15 @@ class Price
     public function setPriceDiscount(float $price_discount): self
     {
         $this->price_discount = $price_discount;
+
+        return $this;
+    }
+
+    public function setPrices(stdClass $prices): self
+    {
+        $this->setPricePurchase($prices->price_purchase);
+        $this->setPriceSelling($prices->price_selling);
+        $this->setPriceDiscount($prices->price_discount);
 
         return $this;
     }
