@@ -29,9 +29,6 @@ class ApiController extends AbstractController
             throw new CustomUserMessageAccountStatusException($e->getMessage());
         }
 
-        return $this->json([
-            'text' => 'Added/Fixed: ' . $result,
-            'message' => 'Welcome to your API controller!',
-        ]);
+        return $this->json($result);
     }
 }

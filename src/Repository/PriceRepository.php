@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\Price;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use App\Service\Price\JSONPrices;
 
 /**
  * @extends ServiceEntityRepository<Price>
@@ -40,27 +39,58 @@ class PriceRepository extends ServiceEntityRepository
         }
     }
 
-    public function addList(array $data): int
+    /**
+     * По всему списку
+     * Проверка записи по ключу (region_id, product_id)
+     * Если нет - добавляем
+     * Если есть такая же - не трогаем
+     * Если отличаетя - правим
+     */
+    public function addList(array $data): array
     {
         $manager = $this->getEntityManager();
-        $result = 0;
+        $result = [];
 
         foreach($data as $product) {
+            $_result = [
+                'product_id' => $product->product_id,
+                'prices' => [],
+            ];
+
             foreach($product->prices as $region_id => $prices) {
-                $price = new Price();
-
-                $price->setRegionId($region_id);
-                $price->setProductId($product->product_id);
-                $price->setPrices($prices);
-
                 // INSERT INTO table ... ON DUPLICATE KEY UPDATE ...
-                if ($manager->merge($price)) {
-                    $result++;
+                    // merge is deprecated
+                // if ($res = $manager->merge($price)) {
+                //     $result++;
+                // }
+
+                $row = $manager->find(Price::class, [
+                    'region_id' => $region_id,
+                    'product_id' => $product->product_id,
+                ]);
+
+                if (!$row) {
+                    $row = new Price();
+
+                    $row->setRegionId($region_id);
+                    $row->setProductId($product->product_id);
                 }
+
+                $row->setPrices($prices);
+
+                $manager->persist($row);
 
                 $manager->flush();
                 $manager->clear();
+
+                $_result['prices'][$region_id] = [
+                    "price_purchase" => $row->getPricePurchase(),
+                    "price_selling" => $row->getPriceSelling(),
+                    "price_discount" => $row->getPriceDiscount(),
+                ];
             }
+
+            $result[] = $_result;
         }
 
         return $result;
